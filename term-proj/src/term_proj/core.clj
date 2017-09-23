@@ -58,19 +58,23 @@
 (defn pop-stack
   "Removes top item of stack, returning the resulting state."
   [state stack]
-  :STUB
+  "STUB"
+  (update state stack rest)
   )
 
 (defn peek-stack
   "Returns top item on a stack. If stack is empty, returns :no-stack-item"
   [state stack]
   :STUB
-  )
+  (if (empty? (get state stack))
+    :no-stack-item
+    (first (get state stack))
+  ))
 
 (defn empty-stack?
   "Returns true if the stack is empty in state."
   [state stack]
-  :STUB
+  (empty? (get state stack))
   )
 
 (defn get-args-from-stacks
@@ -113,7 +117,9 @@
   Can't use make-push-instruction, since :input isn't a stack, but a map."
   [state]
   :STUB
-  )
+  (let [result (get (get state :input) :in1)]
+    (push-to-stack state :exec result)
+  ))
 
 (defn integer_+
   "Adds the top two integers and leaves result on the integer stack.
@@ -138,12 +144,13 @@
   Note: the second integer on the stack should be subtracted from the top integer."
   [state]
   :STUB
-  )
+  (make-push-instruction state -' [:integer :integer] :integer))
 
 (defn integer_*
   "Multiplies the top two integers and leaves result on the integer stack."
   [state]
   :STUB
+  (make-push-instruction state *' [:integer :integer] :integer)
   )
 
 (defn integer_%

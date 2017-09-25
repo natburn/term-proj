@@ -138,13 +138,23 @@
 ;;           popped-twice (pop-stack (pop-stack state :integer) :integer)]
 ;;       (push-to-stack popped-twice :integer (+' arg1 arg2)))))
 
+(defn integer_-_without_helpers
+  [state]
+  (if (< (count (:integer state)) 2)
+    state
+    (let [arg1 (peek-stack state :integer)
+               arg2 (peek-stack (pop-stack state :integer) :integer)
+               popped-twice (pop-stack (pop-stack state :integer) :integer)]
+               (push-to-stack popped-twice :integer (-' arg1 arg2)))))
+
 
 (defn integer_-
   "Subtracts the top two integers and leaves result on the integer stack.
   Note: the second integer on the stack should be subtracted from the top integer."
   [state]
   :STUB
-  (make-push-instruction state -' [:integer :integer] :integer))
+  ;(make-push-instruction state -' [:integer :integer] :integer)
+  (integer_-_without_helpers state))
 
 (defn integer_*
   "Multiplies the top two integers and leaves result on the integer stack."
@@ -153,14 +163,46 @@
   (make-push-instruction state *' [:integer :integer] :integer)
   )
 
+
+(defn integer_%_without_helpers
+  [state]
+  (if (< (count (:integer state)) 2)
+    state
+    (let [arg1 (peek-stack state :integer)
+               arg2 (peek-stack (pop-stack state :integer) :integer)
+               popped-twice (pop-stack (pop-stack state :integer) :integer)]
+               (if (= arg2 0)
+                arg1
+                (push-to-stack popped-twice :integer (quot arg1 arg2))))))
+
 (defn integer_%
   "This instruction implements 'protected division'.
   In other words, it acts like integer division most of the time, but if the
   denominator is 0, it returns the numerator, to avoid divide-by-zero errors."
   [state]
   :STUB
+  (integer_%_without_helpers state)
   )
 
+
+;;;;;;;;;;
+;; Interpreter
+
+(defn instruction?
+  [ins arg]
+      (loop [instructions ins]
+        (if (empty? instructions)
+          false
+          (if (= (first instructions) arg)
+            true
+            (recur (rest instructions)
+                   )))))
+
+
+(defn push-literal-to-stack
+  [new-push-state top]
+  (push-to-stack new-push-state top)
+  )
 
 ;;;;;;;;;;
 ;; Interpreter
@@ -171,8 +213,16 @@
   or if the next element is a literal, pushes it onto the correct stack.
   Returns the new Push state."
   [push-state]
-  :STUB
-  )
+  ; check if instruction or literal
+  ; if instruction, make-push-instruction
+  ; if literal, push to appropriate stack
+  (let [top (peek-stack push-state :exec)
+       new-push-state (pop-stack push-state :exec)] 
+    (if (instruction? instructions top)
+      ((resolve (symbol top)) example-push-state)
+      false
+  )))
+
 
 (defn interpret-push-program
   "Runs the given program starting with the stacks in start-state. Continues

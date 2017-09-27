@@ -195,14 +195,16 @@
           false
           (if (= (first instructions) arg)
             true
-            (recur (rest instructions)
-                   )))))
+            (recur (rest instructions))))))
 
 
 (defn push-literal-to-stack
   [new-push-state top]
-  (push-to-stack new-push-state top)
-  )
+  (cond 
+    (= (type top) (type 1))  (push-to-stack new-push-state :integer top)
+    (= (type top) (type "abc"))  (push-to-stack new-push-state :string top)
+    (= (type top) (type {:in1 1}))  (push-to-stack new-push-state :input top)
+    :else new-push-state))
 
 ;;;;;;;;;;
 ;; Interpreter
@@ -219,9 +221,15 @@
   (let [top (peek-stack push-state :exec)
        new-push-state (pop-stack push-state :exec)] 
     (if (instruction? instructions top)
-      ((resolve (symbol top)) example-push-state)
-      false
+      ((eval top) new-push-state)
+      (push-literal-to-stack new-push-state top)
   )))
+
+
+(defn load-program
+  [program start-state]
+  (update start-state :exec concat program))
+
 
 
 (defn interpret-push-program
@@ -229,8 +237,17 @@
   until the exec stack is empty. Returns the state of the stacks after the
   program finishes executing."
   [program start-state]
-  :STUB
-  )
+  ":STUB"
+  (let [loaded-state (load-program program start-state)]
+  (loop [current-state loaded-state]
+    (println (get current-state :exec))
+    (println (get current-state :exec) (get current-state :integer) (get current-state :string))
+    (if (empty? (get current-state :exec))
+      current-state
+      (let [new-state (interpret-one-step current-state)]
+        (recur new-state)
+    )
+  ))))
 
 
 ;;;;;;;;;;

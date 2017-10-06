@@ -441,6 +441,14 @@ Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
   :STUB
   (+ (+ x 3) (* (* x x) x)))
 
+
+;(def example-individual
+; {:program '(3 5 integer_* "hello" 4 "world" integer_-)
+; :errors [8 7 6 5 4 3 2 1 0 1]
+; :total-error 37})"
+
+
+
 (defn regression-error-function
   "Takes an individual and evaluates it on some test cases. For each test case,
   runs program with the input set to :in1 in the :input map part of the Push state.
@@ -453,6 +461,22 @@ Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
   on the integer stack."
   [individual]
   :STUB
+  (def test-cases (range 0 5 101))
+  (def program (get individual :program))
+  (loop [test-case (first test-cases)
+        errors []]
+    (let [begin-state ((assoc-in empty-push-state [:input] {:in1 5}))
+         result-state (interpret-push-program (program begin-state))
+         result (get :integer result-state)
+         target-result (target-function test-case)]
+         (if (not (= result  target-result))
+              (recur (rest test-cases) '(conj (abs (- result target-result)) errors))))))
+
+
+
+
+    )
+
   )
 
 

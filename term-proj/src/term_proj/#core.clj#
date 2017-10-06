@@ -184,7 +184,6 @@
   (integer_%_without_helpers state)
   )
 
-
 ;;;;;;;;;;
 ;; Interpreter
 
@@ -245,9 +244,7 @@
     (if (empty? (get current-state :exec))
       current-state
       (let [new-state (interpret-one-step current-state)]
-        (recur new-state)
-    )
-  ))))
+        (recur new-state))))))
 
 
 ;;;;;;;;;;
@@ -258,35 +255,122 @@
   a maximum initial program size."
   [instructions max-initial-program-size]
   :STUB
-  )
+   (take max-initial-program-size (repeatedly #(nth instructions (int (rand (count instructions))))))))
+
+
+(defn get-random-sample
+  [population]
+  (let [sample (random-sample 0.5 population)]
+    (if (empty? sample)
+      (get-random-sample population)
+      sample)))
+
 
 (defn tournament-selection
   "Selects an individual from the population using a tournament. Returned 
   individual will be a parent in the next generation. Can use a fixed
-  tournament size."
+  tournament size.";"ASK PROF for this one";( let [fraction-of-population (get-random-sample population)]
   [population]
   :STUB
-  )
+  (if (empty? population)
+    (population)
+      (loop [pop (get-random-sample population)
+           fittest-ind (first pop)
+           fittest-error (get (first pop) :total-error)]
+      (if (= 1 (count pop))
+        fittest-ind
+        (if (< fittest-error (get (second pop) :total-error))
+          (recur (rest pop) fittest-ind fittest-error)
+          (recur (rest pop) (second pop) (get (second pop) :total-error)))))))
+
+(defn get-element
+  "return one element based on 50% chance for each"
+  [element1 element2]
+  (def x (+ (rand-int 10) 1))
+  (if (< x 6)
+    (if (nil? element1) 
+      element2
+      element1)
+    (if (nil? element2) 
+      element1
+      element2)))
+
+(defn Keep-Half?
+  "return true or false based on a 50% chance"
+  [n]
+  (def x (+ (rand-int 100) 1))
+  (if (< x 50)
+    false
+    true))
+
+
 
 (defn crossover
   "Crosses over two programs (note: not individuals) using uniform crossover.
   Returns child program."
-  [prog-a prog-b]
-  :STUB
-  )
-;control-c alt-j; control-c control-c
+  [program1 program2]
+  (def element (get-element (first program1) (first program2)))
+  (cond 
+    (and (empty? program1) (empty? program2)) 
+            '()
+    (and (empty? (rest program1)) (not (empty? (rest program2)))) 
+            (cons element (filter Keep-Half? (rest program2)))
+
+    (and (empty? (rest program2)) (not (empty? (rest program1)))) 
+            (cons element (filter Keep-Half? (rest program1)))
+    :else 
+      (cons element (crossover (rest program1) (rest program2)))))
+
+
+(defn add-instructions
+  ;returns the list with randomly selected instructions inserted
+  ;as indicated in the index_insert list
+  [index_insert program instructions pos]
+  (def current_index (first index_insert))
+  (def current_program_value (first program))
+  (def instruction (rand-nth instructions))
+  (if (and (nil? current_program_value) (nil? current_index))
+    '()
+   (if (= current_index pos)
+    (cons instruction 
+                            (add-instructions (rest index_insert) 
+                                              program 
+                                              instructions
+                                              pos))
+    (cons current_program_value
+                            (add-instructions index_insert 
+                                              (rest program) 
+                                              instructions
+                                              (inc pos))))))
+(defn Insert?
+  ;returns true to give a 5% probability if rand num is less than 5
+  [n]
+  (def x (+ (rand-int 100) 1))
+  (if (< x 6)
+    true
+    false))
+
 (defn uniform-addition
   "Randomly adds new instructions before every instruction (and at the end of
   the program) with some probability. Returns child program."
-  [prog]
-  :STUB
-  )
+  [program]
+  (def x (range (inc (count program))))
+  ;indices of where to insert instructions
+  (def index_insert (filter Insert? x))
+  (add-instructions index_insert program instructions 0))
+
+(defn keep?
+  "return true if x is 5 or less"
+  [n]
+  (def x (+ (rand-int 100) 1))
+  (if (< x 6)
+  false
+  true))
 
 (defn uniform-deletion
   "Randomly deletes instructions from program at some rate. Returns child program."
   [prog]
-  :STUB
-  )
+  (filter keep? prog))
 
 (defn select-and-vary
   "Selects parent(s) from population and varies them, returning
@@ -295,8 +379,15 @@
   25% to uniform-addition, and 25% to uniform-deletion."
   [population]
   :STUB
-  )
-
+  (let [chance (int (rand 4))
+        program1 (get (tournament-selection population) :program)
+        program2 (get (tournament-selection population) :program)
+        child-program (cond
+                          (< chance 2) (crossover program)
+                          (= chance 2) (uniform-addition program) 
+                          (= chance 3) (uniform-deletion program) )]
+        {:program child-program}))
+;2001:0db8:0000:0000:000:ff00:0042:8329
 (defn report
   "Reports information on the population each generation. Should look something
   like the following (should contain all of this info; format however you think
@@ -312,6 +403,10 @@ Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
   "
   [population generation]
   :STUB
+  (println "-------------------------------------------------------")
+  (println "               Report for Generation ", generation)
+  (println "-------------------------------------------------------")
+  (let [best_individual (get-best-individual population)])
   )
 
 (defn push-gp
@@ -344,7 +439,15 @@ Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
   Should literally compute this mathematical function."
   [x]
   :STUB
-  )
+  (+ (+ x 3) (* (* x x) x)))
+
+
+;(def example-individual
+; {:program '(3 5 integer_* "hello" 4 "world" integer_-)
+; :errors [8 7 6 5 4 3 2 1 0 1]
+; :total-error 37})"
+
+
 
 (defn regression-error-function
   "Takes an individual and evaluates it on some test cases. For each test case,
@@ -358,6 +461,19 @@ Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
   on the integer stack."
   [individual]
   :STUB
+  (def test-cases (range 0 5 101))
+  (def program (get individual :program))
+  (loop [test-case (first test-cases)
+        errors []]
+    (let [begin-state ((assoc-in empty-push-state [:input] {:in1 5}))
+         result-state (interpret-push-program (program begin-state))
+         result (get :integer result-state)
+         target-result (target-function test-case)]
+         (if (not (= result  target-result))
+              (recur (rest test-cases) '(conj (abs (- result target-result)) errors))))))
+
+)
+
   )
 
 

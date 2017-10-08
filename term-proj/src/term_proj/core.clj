@@ -13,7 +13,7 @@
 
 ; An example Push program
 (def example-push-program
-  '(3 5 integer_* "hello" 4 "world" integer_-))
+  '(in1 integer_* "hello" 4 "world" integer_-))
 
 ; An example individual in the population
 ; Made of a map containing, at mimimum, a program, the errors for
@@ -28,12 +28,12 @@
 ;; Instructions must all be either functions that take one Push
 ;; state and return another or constant literals.
 (def instructions
-  (list
-   'in1
-   'integer_+
-   'integer_-
-   'integer_*
-   'integer_%
+  '( 
+    in1
+   integer_+
+   integer_-
+   integer_*
+   integer_%
    0
    1
    ))
@@ -475,11 +475,45 @@ Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
 
 
 
-    )
+(defn get-test-case
+  [test-case]
+  (assoc-in empty-push-state [:input] {:in1 test-case}))
 
-  )
+(defn get-result-state
+  [test-case program]
+  (def start-state (assoc-in empty-push-state [:input] {:in1 test-case}))
+  (def result-state (interpret-push-program program start-state))
+  (def result (get result-state :integer))
+  (if (empty? result)
+    1000
+    (first result)
+    ))
 
 
+
+(defn regression-error-function
+  "Takes an individual and evaluates it on some test cases. For each test case,
+  runs program with the input set to :in1 in the :input map part of the Push state.
+  Then, the output is the integer on top of the integer stack in the Push state
+  returned by the interpreter. Computes each error by comparing output of
+  the program to the correct output.
+  Returns the individual with :errors set to the list of errors on each case,
+  and :total-error set to the sum of the errors.
+  Note: You must consider what to do if the program doesn't leave anything
+  on the integer stack."
+  [individual]
+  :STUB
+  (loop [test-cases (range 0 101 5)
+         program (get individual :program)
+         errors '()]
+         ;(println "here", (first test-cases))
+         (println "here", (first test-cases),"result" (get-result-state (first test-cases) program))
+         (if (empty? test-cases)
+          errors
+         (recur (rest test-cases)
+                 program
+                 (conj errors
+                      (get-result-state (first test-cases) program))))))
 ;;;;;;;;;;
 ;; The main function. Uses some problem-specific functions.
 

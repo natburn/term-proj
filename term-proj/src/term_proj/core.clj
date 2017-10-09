@@ -17,7 +17,7 @@
 
 ; An example individual in the population
 ; Made of a map containing, at mimimum, a program, the errors for
-; the program, and a total error
+; the program, and a total error 
 (def example-individual
   {:program '(3 5 integer_* "hello" 4 "world" integer_-)
    :errors [8 7 6 5 4 3 2 1 0 1]
@@ -34,8 +34,17 @@
    integer_-
    integer_*
    integer_%
-   ;0
-   ;1
+   0
+   1
+   ))
+
+(def non-literal-instructions
+  '( 
+    in1
+   integer_+
+   integer_-
+   integer_*
+   integer_%
    ))
 
 
@@ -217,9 +226,10 @@
   ; check if instruction or literal
   ; if instruction, make-push-instruction
   ; if literal, push to appropriate stack
+  ;(println "IOS", push-state)
   (let [top (peek-stack push-state :exec)
        new-push-state (pop-stack push-state :exec)] 
-    (if (instruction? instructions top)
+    (if (instruction? non-literal-instructions top)
       ((eval top) new-push-state)
       (push-literal-to-stack new-push-state top)
   )))
@@ -257,8 +267,7 @@
   :STUB
   ;(let [diff (- max-len (- min-len 1))
     ;    program-len (+ min-len (int (rand diff)))] ; randomize program length
-   {:program (take max-len (repeatedly ;randomly select from instructions list
-                      #(nth instructions (int (rand (count instructions))))))})
+   {:program (take max-len (repeatedly #(nth instructions (int (rand (count instructions))))))})
 
 
 (defn get-random-sample
@@ -375,6 +384,13 @@
   [prog]
   (filter keep? prog))
 
+(defn target-function
+  "Target function: f(x) = x^3 + x + 3
+  Should literally compute this mathematical function."
+  [x]
+  :STUB
+  (+ (+ x 3) (* (* x x) x)))
+
 (defn select-and-vary
   "Selects parent(s) from population and varies them, returning
   a child individual (note: not program). Chooses which genetic operator
@@ -391,26 +407,48 @@
                           (= chance 3) (uniform-deletion program1))]
         {:program child-program}))
 ;2001:0db8:0000:0000:000:ff00:0042:8329
+
+
+(defn get-best
+  "Selects an individual from the population using a tournament. Returned 
+  individual will be a parent in the next generation. Can use a fixed
+  tournament size."
+  [population]
+  :STUB
+  (if (empty? population)
+    (println "u gave me an empty list")
+    (loop [population population
+           fittest-ind (first population)
+           fittest-error (get (first population) :total-error)]
+      (if (= 1 (count population))
+        fittest-ind
+        (if (< fittest-error (get (second population) :total-error))
+          (recur (rest population) fittest-ind fittest-error)
+          (recur (rest population) (second population) (get (second population) :total-error)))))))
+
 (defn report
   "Reports information on the population each generation. Should look something
   like the following (should contain all of this info; format however you think
   looks best; feel free to include other info).
 
--------------------------------------------------------
-               Report for Generation 3
--------------------------------------------------------
-Best program: (in1 integer_% integer_* integer_- 0 1 in1 1 integer_* 0 integer_* 1 in1 integer_* integer_- in1 integer_% integer_% 0 integer_+ in1 integer_* integer_- in1 in1 integer_* integer_+ integer_* in1 integer_- integer_* 1 integer_%)
-Best program size: 33
-Best total error: 727
-Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
-  "
-  [population generation]
+;-------------------------------------------------------
+;               Report for Generation 3
+;-------------------------------------------------------
+;Best program: (in1 integer_% integer_* integer_- 0 1 in1 1 integer_* 0 integer_* 1 in1 integer_* integer_- in1 integer_% integer_% 0 integer_+ in1 integer_* integer_- in1 in1 integer_* integer_+ integer_* in1 integer_- integer_* 1 integer_%)
+;Best program size: 33
+;Best total error: 727
+;Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)  "
+ [population generation]
   :STUB
   (println "-------------------------------------------------------")
-  (println "               Report for Generation ", generation)
+  (println "               Report for Generation ",generation)
   (println "-------------------------------------------------------")
-  (let [best_individual (get-best-individual population)])
-  )
+  (let [best-individual (get-best population)
+        best-program (get best-individual :program)]
+    (println best-program)
+    (println "Best program size:" (count best-program))
+    (println "Best total error:", (get best-individual :total-error))
+    (println "Best errors:", (get best-individual :errors))))
 
 
 
@@ -435,57 +473,6 @@ Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
           true
           (recur (rest population))))))
 
-
-(defn push-gp
-  "Main GP loop. Initializes the population, and then repeatedly
-  generates and evaluates new populations. Stops if it finds an
-  individual with 0 error (and should return :SUCCESS, or if it
-  exceeds the maximum generations (and should return nil). Should print
-  report each generation.
-  --
-  The only argument should be a map containing the core parameters to
-  push-gp. The format given below will decompose this map into individual
-  arguments. These arguments should include:
-   - population-size
-   - max-generations
-   - error-function
-   - instructions (a list of instructions)
-   - max-initial-program-size (max size of randomly generated programs)"
-  [{:keys [population-size max-generations error-function instructions max-initial-program-size]}]
-  :STUB
-  (let [population (get-initial-population population-size max-initial-program-size)
-        population-with-errors (map regression-error-function population)
-        found-solution (find-solution population-with-errors)
-        ]
-        (if (found-solution)
-          :SUCCESS
-          
-          )
-
-
-        )
-  )
-
-
-;;;;;;;;;;
-;; The functions below are specific to a particular problem.
-;; A different problem would require replacing these functions.
-;; Problem: f(x) = x^3 + x + 3
-
-(defn target-function
-  "Target function: f(x) = x^3 + x + 3
-  Should literally compute this mathematical function."
-  [x]
-  :STUB
-  (+ (+ x 3) (* (* x x) x)))
-
-
-;(def example-individual
-; {:program '(3 5 integer_* "hello" 4 "world" integer_-)
-; :errors [8 7 6 5 4 3 2 1 0 1]
-; :total-error 37})"
-
-
 (defn get-test-case
   [test-case]
   (assoc-in empty-push-state [:input] {:in1 test-case}))
@@ -495,10 +482,10 @@ Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
   (def start-state (assoc-in empty-push-state [:input] {:in1 test-case}))
   (def result-state (interpret-push-program program start-state))
   (def result (get result-state :integer))
-  (def error (- (first result) (target-function test-case)))
+  ;(def error (- (first result) (target-function test-case)))
   (if (empty? result)
-    1000
-    (Math/abs error)
+    100000
+    (Math/abs (- (first result) (target-function test-case)))
     ))
 
 
@@ -522,25 +509,98 @@ Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
          ;(println "here", (first test-cases),"result" (get-result-state (first test-cases) program))
          (if (or (empty? test-cases) (nil? test-cases))
           (-> individual
-              (assoc-in  [:errors] errors) 
+              (assoc-in  [:errors] errors)
+              ;(if (empty? errors) 
               (assoc-in [:total-error] (reduce +' errors)))
+              ;(assoc-in [:total-error] (reduce +' errors))))
          (recur (rest test-cases)
                  program
                  (conj errors
                       (get-result-state (first test-cases) program))))))
+
+
+(defn create-new-generation
+  [population-with-errors population-size]
+  (take population-size (repeatedly #(select-and-vary population-with-errors))))
+
+
+(defn get-pop-errors
+  [population]
+  (loop [population population
+         result '()]
+    (println result)
+    (println (count population))
+    (println population)
+    (println "*******************")
+    (if (empty? population)
+      result
+      (recur (rest population)
+          (conj result 
+                (regression-error-function (first population)))))))
+
+
+
+(defn push-gp
+  "Main GP loop. Initializes the population, and then repeatedly
+  generates and evaluates new populations. Stops if it finds an
+  individual with 0 error (and should return :SUCCESS, or if it
+  exceeds the maximum generations (and should return nil). Should print
+  report each generation.
+  --
+  The only argument should be a map containing the core parameters to
+  push-gp. The format given below will decompose this map into individual
+  arguments. These arguments should include:
+   - population-size
+   - max-generations
+   - error-function
+   - instructions (a list of instructions)
+   - max-initial-program-size (max size of randomly generated programs)"
+  [{:keys [population-size max-generations error-function instructions max-initial-program-size]}]
+  :STUB
+  (loop [
+         population (get-initial-population population-size max-initial-program-size)
+         population-with-errors (map regression-error-function population)
+         generation 0
+        ]
+        ;(println "***************************************************")
+        ;(println generation)
+        ;(println population)
+        ;(println population-with-errors)
+        (report population generation)
+        (cond 
+          (= generation max-generations) nil
+          (find-solution population-with-errors) :SUCCESS
+          :else
+          (let [next-generation (create-new-generation population-with-errors population-size)]
+                ;generation-with-errors (map regression-error-function next-generation)]
+                (recur next-generation (map regression-error-function next-generation) (inc generation)))))) 
+
+
+;;;;;;;;;;
+;; The functions below are specific to a particular problem.
+;; A different problem would require replacing these functions.
+;; Problem: f(x) = x^3 + x + 3
+
+
+
+
+;(def example-individual
+; {:program '(3 5 integer_* "hello" 4 "world" integer_-)
+; :errors [8 7 6 5 4 3 2 1 0 1]
+; :total-error 37})"
+
+
+
 ;;;;;;;;;;
 ;; The main function. Uses some problem-specific functions.
 
 (defn -main
   "Runs push-gp, giving it a map of arguments."
-  [& args]"
+  [& args]
   (push-gp {:instructions instructions
             :error-function regression-error-function
-            :max-generations 500
+            :max-generations 500  
             :population-size 200
-            :max-initial-program-size 50}))"
-  (interpret-push-program example-push-program))
-
-
-"
+            :max-initial-program-size 50}))
+  ;(interpret-push-program example-push-program))
 

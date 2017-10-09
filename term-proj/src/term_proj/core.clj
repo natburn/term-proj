@@ -566,7 +566,7 @@
         ;(println generation)
         ;(println population)
         ;(println population-with-errors)
-        (report population generation)
+        (report population-with-errors generation)
         (cond 
           (= generation max-generations) nil
           (find-solution population-with-errors) :SUCCESS

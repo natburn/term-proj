@@ -34,8 +34,8 @@
    integer_-
    integer_*
    integer_%
-   0
-   1
+   ;0
+   ;1
    ))
 
 
@@ -253,9 +253,12 @@
 (defn make-random-push-program
   "Creates and returns a new program. Takes a list of instructions and
   a maximum initial program size."
-  [instructions max-initial-program-size]
+  [instructions max-len]
   :STUB
-   (take max-initial-program-size (repeatedly #(nth instructions (int (rand (count instructions))))))))
+  ;(let [diff (- max-len (- min-len 1))
+    ;    program-len (+ min-len (int (rand diff)))] ; randomize program length
+   {:program (take max-len (repeatedly ;randomly select from instructions list
+                      #(nth instructions (int (rand (count instructions))))))})
 
 
 (defn get-random-sample
@@ -383,9 +386,9 @@
         program1 (get (tournament-selection population) :program)
         program2 (get (tournament-selection population) :program)
         child-program (cond
-                          (< chance 2) (crossover program)
-                          (= chance 2) (uniform-addition program) 
-                          (= chance 3) (uniform-deletion program) )]
+                          (< chance 2) (crossover program1 program2)
+                          (= chance 2) (uniform-addition program1) 
+                          (= chance 3) (uniform-deletion program1))]
         {:program child-program}))
 ;2001:0db8:0000:0000:000:ff00:0042:8329
 (defn report
@@ -409,6 +412,30 @@ Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
   (let [best_individual (get-best-individual population)])
   )
 
+
+
+(defn get-initial-population
+  [population-size max-initial-program-size]
+  (take population-size (repeatedly #(make-random-push-program instructions max-initial-program-size))))
+
+(defn is-solution?
+  [individual]
+  (let [total-error (get individual :total-error)]
+    (if (= 0 total-error)
+      true
+      false)))
+
+
+(defn find-solution
+  [population]
+  (loop [population population]
+        (if (empty? population)
+          false
+         (if (is-solution? (first population))
+          true
+          (recur (rest population))))))
+
+
 (defn push-gp
   "Main GP loop. Initializes the population, and then repeatedly
   generates and evaluates new populations. Stops if it finds an
@@ -426,6 +453,17 @@ Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
    - max-initial-program-size (max size of randomly generated programs)"
   [{:keys [population-size max-generations error-function instructions max-initial-program-size]}]
   :STUB
+  (let [population (get-initial-population population-size max-initial-program-size)
+        population-with-errors (map regression-error-function population)
+        found-solution (find-solution population-with-errors)
+        ]
+        (if (found-solution)
+          :SUCCESS
+          
+          )
+
+
+        )
   )
 
 
@@ -480,7 +518,7 @@ Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
   (loop [test-cases (range -100 101 7)
          program (get individual :program)
          errors '()]
-         ;(println "errors", errors)
+         ;(println "errors", errors, "program", program)
          ;(println "here", (first test-cases),"result" (get-result-state (first test-cases) program))
          (if (or (empty? test-cases) (nil? test-cases))
           (-> individual
@@ -502,4 +540,7 @@ Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
             :population-size 200
             :max-initial-program-size 50}))"
   (interpret-push-program example-push-program))
+
+
+"
 

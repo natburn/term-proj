@@ -239,8 +239,8 @@
   ":STUB"
   (let [loaded-state (load-program program start-state)]
   (loop [current-state loaded-state]
-    (println (get current-state :exec))
-    (println (get current-state :exec) (get current-state :integer) (get current-state :string))
+    ;(println (get current-state :exec))
+    ;(println (get current-state :exec) (get current-state :integer) (get current-state :string))
     (if (empty? (get current-state :exec))
       current-state
       (let [new-state (interpret-one-step current-state)]
@@ -448,33 +448,6 @@ Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
 ; :total-error 37})"
 
 
-
-(defn regression-error-function
-  "Takes an individual and evaluates it on some test cases. For each test case,
-  runs program with the input set to :in1 in the :input map part of the Push state.
-  Then, the output is the integer on top of the integer stack in the Push state
-  returned by the interpreter. Computes each error by comparing output of
-  the program to the correct output.
-  Returns the individual with :errors set to the list of errors on each case,
-  and :total-error set to the sum of the errors.
-  Note: You must consider what to do if the program doesn't leave anything
-  on the integer stack."
-  [individual]
-  :STUB
-  (def test-cases (range 0 5 101))
-  (def program (get individual :program))
-  (loop [test-case (first test-cases)
-        errors []]
-    (let [begin-state ((assoc-in empty-push-state [:input] {:in1 5}))
-         result-state (interpret-push-program (program begin-state))
-         result (get :integer result-state)
-         target-result (target-function test-case)]
-         (if (not (= result  target-result))
-              (recur (rest test-cases) '(conj (abs (- result target-result)) errors))))))
-
-
-
-
 (defn get-test-case
   [test-case]
   (assoc-in empty-push-state [:input] {:in1 test-case}))
@@ -484,9 +457,10 @@ Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
   (def start-state (assoc-in empty-push-state [:input] {:in1 test-case}))
   (def result-state (interpret-push-program program start-state))
   (def result (get result-state :integer))
+  (def error (- (first result) (target-function test-case)))
   (if (empty? result)
     1000
-    (first result)
+    (Math/abs error)
     ))
 
 
@@ -503,13 +477,15 @@ Best errors: (117 96 77 60 45 32 21 12 5 0 3 4 3 0 5 12 21 32 45 60 77)
   on the integer stack."
   [individual]
   :STUB
-  (loop [test-cases (range 0 101 5)
+  (loop [test-cases (range -100 101 7)
          program (get individual :program)
          errors '()]
-         ;(println "here", (first test-cases))
-         (println "here", (first test-cases),"result" (get-result-state (first test-cases) program))
-         (if (empty? test-cases)
-          errors
+         ;(println "errors", errors)
+         ;(println "here", (first test-cases),"result" (get-result-state (first test-cases) program))
+         (if (or (empty? test-cases) (nil? test-cases))
+          (-> individual
+              (assoc-in  [:errors] errors) 
+              (assoc-in [:total-error] (reduce +' errors)))
          (recur (rest test-cases)
                  program
                  (conj errors

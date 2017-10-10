@@ -330,9 +330,9 @@
             '()
     ;filter the other list if one of them is empty
     (and (empty? (rest program1)) (not (empty? (rest program2)))) 
-            (cons element (filter Keep-Half? (rest program2)))
+            (cons element (filter keep-half? (rest program2)))
     (and (empty? (rest program2)) (not (empty? (rest program1)))) 
-            (cons element (filter Keep-Half? (rest program1)))
+            (cons element (filter keep-half? (rest program1)))
     ;recursive call to perform crossover for next elements
     :else 
         (cons element (crossover (rest program1) (rest program2))))))
@@ -379,7 +379,7 @@
   [program]
   (let [x (range (inc (count program)))
         ;indices of where to insert instructions
-        index_insert (filter Insert? x)]
+        index_insert (filter insert? x)]
         (add-instructions index_insert program instructions 0)))
 
 (defn keep?
